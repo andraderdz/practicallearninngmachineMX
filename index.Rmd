@@ -1,0 +1,161 @@
+---
+title: "Human Activity Recognition"
+author: "Ricardo D. Andrade"
+date: "9th February, 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Summary
+
+
+In this document we will develope a Machine Learning algorythm to analyse devices known as Human Activity Recognition Technology, that recolect multiple activities of a person along the day.The presented collected data is about **5 activities or classes** (sitting-down, standing-up, standing, walking, and sitting). So we will use the data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants to try to predict if they do the activity in a wrong way.
+
+The training data for this project are available here:
+
+<https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv>
+
+The test data are available here:
+
+<https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv>
+
+
+## Data Decision
+
+To get to know more about what variables we should use we read the complete description for this project from the source: <http://groupware.les.inf.puc-rio.br/har>. We decide to focus in the next body parts:
+
+
+```{r echo=FALSE}
+knitr::include_graphics("/Users/DELL/Desktop/Coursera/Data Science Specialization/Machine Learnin/Project/on-body-sensing-schema.png")
+```
+
+We considered the arm, belt, forearm and dumbbell as variables that affected more in the exercise process, we use the follow asociated variables:  accelerometer in 3 dimesions (x,y,z). 
+
+## Subsetting
+
+After reading (loading) the original data, the result of the subsetting it is the next:
+
+```{r eval=FALSE}
+
+training2<-training[,
+c( "accel_arm_x","accel_arm_y","accel_arm_z",
+   "accel_belt_x","accel_belt_y","accel_belt_z",
+   "accel_dumbbell_x","accel_dumbbell_y","accel_dumbbell_z",
+   "accel_forearm_x", "accel_forearm_y","accel_forearm_z","classe")]
+
+testing2<-testing[,
+c( "accel_arm_x","accel_arm_y","accel_arm_z",
+"accel_belt_x","accel_belt_y","accel_belt_z",
+"accel_dumbbell_x","accel_dumbbell_y","accel_dumbbell_z",
+"accel_forearm_x", "accel_forearm_y","accel_forearm_z")]
+
+```
+
+##Overview for the chosen variables
+
+For reasons of time, we decided to do a little nearZeroVar check for the variables, so make sure that apport meaningful data to the model.
+
+```{r eval=FALSE}
+
+> nearZeroVar(training2,saveMetrics=T)
+                 freqRatio percentUnique zeroVar   nzv
+accel_arm_x       1.017341     3.9598410   FALSE FALSE
+accel_arm_y       1.140187     2.7367241   FALSE FALSE
+accel_arm_z       1.128000     4.0362858   FALSE FALSE
+accel_belt_x      1.055412     0.8357966   FALSE FALSE
+accel_belt_y      1.113725     0.7287738   FALSE FALSE
+accel_belt_z      1.078767     1.5237998   FALSE FALSE
+accel_dumbbell_x  1.018018     2.1659362   FALSE FALSE
+accel_dumbbell_y  1.053061     2.3748853   FALSE FALSE
+accel_dumbbell_z  1.133333     2.0894914   FALSE FALSE
+accel_forearm_x   1.126437     4.0464784   FALSE FALSE
+accel_forearm_y   1.059406     5.1116094   FALSE FALSE
+accel_forearm_z   1.006250     2.9558659   FALSE FALSE
+classe            1.469581     0.0254816   FALSE FALSE
+```
+
+
+We decided to choose a SVM model because of the large amount of variables and data.
+
+```{r eval=FALSE}
+#Model - SVM
+svmmodFit<-svm(classe ~.,data = training2)
+```
+Since we do not have a testing set that includes the real response, we will compare our model to the train data to chek the result of accuracy
+```{r eval=FALSE}
+> predict1<-predict(svmmodFit,training2)
+> confusionMatrix(predict1,training2$classe)
+Confusion Matrix and Statistics
+
+          Reference
+Prediction    A    B    C    D    E
+         A 4943  454  320  325   79
+         B  112 2849  216   45  190
+         C  303  311 2795  304  197
+         D  196   73   49 2504  196
+         E   26  110   42   38 2945
+
+Overall Statistics
+                                          
+               Accuracy : 0.8172
+```
+
+As we can see the accuracy is a very good value of **0.817**, so we decided to do a further investigation for the variables, so we can add a few more. Since we consider that may be an important movement of the body we decided to add the **pitch value variables** to the SVM model ("pitch_arm", "pitch_belt", "pitch_dumbbell", "pitch_forearm"). The new data sets and model are as follows
+
+```{r eval=FALSE}
+#Model2 - SVM
+training4<-training[,
+                    c( "accel_arm_x","accel_arm_y","accel_arm_z",
+                       "accel_belt_x","accel_belt_y","accel_belt_z",
+                       "accel_dumbbell_x","accel_dumbbell_y","accel_dumbbell_z",
+                       "accel_forearm_x", "accel_forearm_y","accel_forearm_z",
+                       "pitch_arm","pitch_belt","pitch_dumbbell","pitch_forearm","classe")]
+
+testing4<-testing[,
+                  c( "accel_arm_x","accel_arm_y","accel_arm_z",
+                     "accel_belt_x","accel_belt_y","accel_belt_z",
+                     "accel_dumbbell_x","accel_dumbbell_y","accel_dumbbell_z",
+                     "accel_forearm_x", "accel_forearm_y","accel_forearm_z",
+                     "pitch_arm","pitch_belt","pitch_dumbbell","pitch_forearm")]
+svmmodFit2<-svm(classe ~.,data = training4)
+```
+
+## Accuracy for the Final Model
+
+Now we look for the Accuracy of this new model
+```{r eval=FALSE}
+predict4<-predict(svmmodFit2,training4)
+confusionMatrix(predict4,training4$classe)
+> confusionMatrix(predict4,training4$classe)
+Confusion Matrix and Statistics
+
+          Reference
+Prediction    A    B    C    D    E
+         A 5223  470   98   53   29
+         B  100 2991  134   59   87
+         C  152  206 3100  338  171
+         D   82   63   57 2742  177
+         E   23   67   33   24 3143
+
+Overall Statistics
+                                          
+               Accuracy : 0.8765 
+```
+
+This new models is quite good and by matter of time we will let this model in this way. Models like random forest and Trees were tested resulting in really bad Accuracies (<0.55).
+
+## The final Quizz
+
+The forecast for the final quizz is the following
+
+```{r eval=FALSE}
+> predict(svmmodFit2,testing4)
+ 1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 
+ B  A  A  A  A  E  D  D  A  A  B  C  B  A  E  E  A  B  B  B 
+Levels: A B C D E
+```
+
+And the resulting score for the quizz is **90%**.

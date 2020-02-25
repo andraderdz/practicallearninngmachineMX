@@ -28,8 +28,8 @@ The test data are available here:
 To get to know more about what variables we should use we read the complete description for this project from the source: <http://groupware.les.inf.puc-rio.br/har>. We decide to focus in the next body parts:
 
 
-```{r echo=FALSE}
-knitr::include_graphics("/Users/DELL/Desktop/Coursera/Data Science Specialization/Machine Learnin/Project/on-body-sensing-schema.png")
+```{r out.width = "250px", echo=FALSE}
+knitr::include_graphics("/Users/Ricardo/Desktop/Coursera/Data Science Specialization/Machine Learnin/Project/on-body-sensing-schema.png")
 ```
 
 We considered the arm, belt, forearm and dumbbell as variables that affected more in the exercise process, we use the follow asociated variables:  accelerometer in 3 dimesions (x,y,z). 
@@ -54,7 +54,7 @@ c( "accel_arm_x","accel_arm_y","accel_arm_z",
 
 ```
 
-##Overview for the chosen variables
+## Overview for the chosen variables
 
 For reasons of time, we decided to do a little nearZeroVar check for the variables, so make sure that apport meaningful data to the model.
 
@@ -149,7 +149,7 @@ This new models is quite good and by matter of time we will let this model in th
 
 ## The final Quizz
 
-The forecast for the final quizz is the following
+The forecast for the final quizz is the following:
 
 ```{r eval=FALSE}
 > predict(svmmodFit2,testing4)

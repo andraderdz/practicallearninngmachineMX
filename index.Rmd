@@ -25,14 +25,14 @@ The test data are available here:
 
 ## Data Decision
 
-To get to know more about what variables we should use we read the complete description for this project from the source: <http://groupware.les.inf.puc-rio.br/har>. We decide to focus in the next body parts:
+To get to know more about what variables we should use we have read the complete description for this project from the next source: <http://groupware.les.inf.puc-rio.br/har>. After analysis we have decided to focus in the next body parts and sensors:
 
 
 ```{r out.width = "250px", echo=FALSE}
 knitr::include_graphics("/Users/Ricardo/Desktop/Coursera/Data Science Specialization/Machine Learnin/Project/on-body-sensing-schema.png")
 ```
 
-We considered the arm, belt, forearm and dumbbell as variables that affected more in the exercise process, we use the follow asociated variables:  accelerometer in 3 dimesions (x,y,z). 
+We considered the arm, belt, forearm and dumbbell as variables that affected more in the exercise process, we use the follow asociated variables:  the accelerometer and the gyroscope both in their 3 respective dimesions (x,y,z), that is a total of 36 variables to predict (plus de classe which is the variable we want to predict)
 
 ## Subsetting
 
@@ -41,10 +41,15 @@ After reading (loading) the original data, the result of the subsetting it is th
 ```{r eval=FALSE}
 
 training2<-training[,
-c( "accel_arm_x","accel_arm_y","accel_arm_z",
-   "accel_belt_x","accel_belt_y","accel_belt_z",
-   "accel_dumbbell_x","accel_dumbbell_y","accel_dumbbell_z",
-   "accel_forearm_x", "accel_forearm_y","accel_forearm_z","classe")]
+c("accel_arm_x","accel_arm_y","accel_arm_z",
+  "accel_forearm_x","accel_forearm_y","accel_forearm_z",
+  "gyros_arm_x","gyros_arm_y","gyros_arm_z",
+  "gyros_forearm_x","gyros_forearm_y","gyros_forearm_z",
+  "accel_belt_x", "accel_belt_y", "accel_belt_z",
+  "gyros_belt_x", "gyros_belt_y", "gyros_belt_z",
+  "accel_dumbbell_x", "accel_dumbbell_y", "accel_dumbbell_z",
+  "gyros_dumbbell_x", "gyros_dumbbell_y", "gyros_dumbbell_z",
+  "classe")]
 
 testing2<-testing[,
 c( "accel_arm_x","accel_arm_y","accel_arm_z",
@@ -59,7 +64,7 @@ c( "accel_arm_x","accel_arm_y","accel_arm_z",
 For reasons of time, we decided to do a little nearZeroVar check for the variables, so make sure that apport meaningful data to the model.
 
 ```{r eval=FALSE}
-
+>library(caret)
 > nearZeroVar(training2,saveMetrics=T)
                  freqRatio percentUnique zeroVar   nzv
 accel_arm_x       1.017341     3.9598410   FALSE FALSE
@@ -78,7 +83,7 @@ classe            1.469581     0.0254816   FALSE FALSE
 ```
 
 
-We decided to choose a SVM model because of the large amount of variables and data.
+We decided to choose a SVM model because of the large amount of variables and data, models like random forest and Trees were tested and resulting in really bad Accuracies (0<0.55) and a large amount of time.
 
 ```{r eval=FALSE}
 #Model - SVM
@@ -123,7 +128,7 @@ testing4<-testing[,
 svmmodFit2<-svm(classe ~.,data = training4)
 ```
 
-## Accuracy for the Final Model
+## Accuracy for the Second Model
 
 Now we look for the Accuracy of this new model
 ```{r eval=FALSE}
@@ -145,7 +150,111 @@ Overall Statistics
                Accuracy : 0.8765 
 ```
 
-This new models is quite good and by matter of time we will let this model in this way. Models like random forest and Trees were tested resulting in really bad Accuracies (<0.55).
+This new models is quite good, but not enough predicting force. So we will build a new model.
+
+## Accuracy for the Final Model
+
+Now we will consider to extend the model and include the gyroscope, yaw, pitch and roll variables. 
+
+```{r eval=FALSE}
+
+training_3<-training[,
+c("accel_arm_x","accel_arm_y","accel_arm_z",
+  "accel_forearm_x","accel_forearm_y","accel_forearm_z",
+  "gyros_arm_x","gyros_arm_y","gyros_arm_z",
+  "gyros_forearm_x","gyros_forearm_y","gyros_forearm_z",
+  "accel_belt_x", "accel_belt_y", "accel_belt_z",
+  "gyros_belt_x", "gyros_belt_y", "gyros_belt_z",
+  "accel_dumbbell_x", "accel_dumbbell_y", "accel_dumbbell_z",
+  "gyros_dumbbell_x", "gyros_dumbbell_y", "gyros_dumbbell_z",
+  "yaw_arm","yaw_belt","yaw_dumbbell","yaw_forearm",
+  "pitch_arm","pitch_belt","pitch_dumbbell","pitch_forearm",
+  "roll_arm","roll_belt","roll_dumbbell","roll_forearm",
+  "classe")]
+
+testing3<-testing[,
+c("accel_arm_x","accel_arm_y","accel_arm_z",
+  "accel_forearm_x","accel_forearm_y","accel_forearm_z",
+  "gyros_arm_x","gyros_arm_y","gyros_arm_z",
+  "gyros_forearm_x","gyros_forearm_y","gyros_forearm_z",
+  "accel_belt_x", "accel_belt_y", "accel_belt_z",
+  "gyros_belt_x", "gyros_belt_y", "gyros_belt_z",
+  "accel_dumbbell_x", "accel_dumbbell_y", "accel_dumbbell_z",
+  "gyros_dumbbell_x", "gyros_dumbbell_y", "gyros_dumbbell_z",
+  "yaw_arm","yaw_belt","yaw_dumbbell","yaw_forearm",
+  "pitch_arm","pitch_belt","pitch_dumbbell","pitch_forearm",
+  "roll_arm","roll_belt","roll_dumbbell","roll_forearm")]
+
+```
+
+Checking if any new variables have zero variance
+
+```{r eval=FALSE}
+>library(caret)
+> nearZeroVar(training_3,saveMetrics=T)
+                 freqRatio percentUnique zeroVar   nzv
+accel_arm_x       1.017341     3.9598410   FALSE FALSE
+accel_arm_y       1.140187     2.7367241   FALSE FALSE
+accel_arm_z       1.128000     4.0362858   FALSE FALSE
+accel_forearm_x   1.126437     4.0464784   FALSE FALSE
+accel_forearm_y   1.059406     5.1116094   FALSE FALSE
+accel_forearm_z   1.006250     2.9558659   FALSE FALSE
+gyros_arm_x       1.015504     3.2769341   FALSE FALSE
+gyros_arm_y       1.454369     1.9162165   FALSE FALSE
+gyros_arm_z       1.110687     1.2638875   FALSE FALSE
+gyros_forearm_x   1.059273     1.5187035   FALSE FALSE
+gyros_forearm_y   1.036554     3.7763735   FALSE FALSE
+gyros_forearm_z   1.122917     1.5645704   FALSE FALSE
+accel_belt_x      1.055412     0.8357966   FALSE FALSE
+accel_belt_y      1.113725     0.7287738   FALSE FALSE
+accel_belt_z      1.078767     1.5237998   FALSE FALSE
+gyros_belt_x      1.058651     0.7134849   FALSE FALSE
+gyros_belt_y      1.144000     0.3516461   FALSE FALSE
+gyros_belt_z      1.066214     0.8612782   FALSE FALSE
+accel_dumbbell_x  1.018018     2.1659362   FALSE FALSE
+accel_dumbbell_y  1.053061     2.3748853   FALSE FALSE
+accel_dumbbell_z  1.133333     2.0894914   FALSE FALSE
+gyros_dumbbell_x  1.003268     1.2282132   FALSE FALSE
+gyros_dumbbell_y  1.264957     1.4167771   FALSE FALSE
+gyros_dumbbell_z  1.060100     1.0498420   FALSE FALSE
+yaw_arm          33.029126    14.6570176   FALSE FALSE
+yaw_belt          1.058480     9.9734991   FALSE FALSE
+yaw_dumbbell      1.132231    83.4828254   FALSE FALSE
+yaw_forearm      15.322835    10.1467740   FALSE FALSE
+pitch_arm        87.256410    15.7323412   FALSE FALSE
+pitch_belt        1.036082     9.3772296   FALSE FALSE
+pitch_dumbbell    2.277372    81.7449801   FALSE FALSE
+pitch_forearm    65.983051    14.8557741   FALSE FALSE
+roll_arm         52.338462    13.5256345   FALSE FALSE
+roll_belt         1.101904     6.7781062   FALSE FALSE
+roll_dumbbell     1.022388    84.2065029   FALSE FALSE
+roll_forearm     11.589286    11.0895933   FALSE FALSE
+classe            1.469581     0.0254816   FALSE FALSE
+```
+
+Let's build the model and look for the Accuracy of this new model
+
+```{r eval=FALSE}
+predict4<-predict(svmmodFit2,training4)
+confusionMatrix(predict4,training4$classe)
+> confusionMatrix(predict4,training4$classe)
+Confusion Matrix and Statistics
+
+          Reference
+Prediction    A    B    C    D    E
+         A 5551  290   23   17    2
+         B    3 3405   63    0   17
+         C   15   88 3284  302   92
+         D    9    7   47 2895   59
+         E    2    7    5    2 3437
+
+Overall Statistics
+                                          
+               Accuracy : 0.9465
+```
+
+This is a quite and very good accuracy and for reasons of time we will stop the analysis here and proceed to forecast for the final quizz.
+
 
 ## The final Quizz
 
@@ -154,8 +263,12 @@ The forecast for the final quizz is the following:
 ```{r eval=FALSE}
 > predict(svmmodFit2,testing4)
  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 
- B  A  A  A  A  E  D  D  A  A  B  C  B  A  E  E  A  B  B  B 
+ B  A  A  A  A  E  D  B  A  A  B  C  B  A  E  E  A  B  B  B 
 Levels: A B C D E
 ```
 
-And the resulting score for the quizz is **90%**.
+And the resulting score for the quizz is **95%**.
+
+
+
+
